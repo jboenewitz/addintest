@@ -9,7 +9,8 @@
     <h1>Send Email</h1>
 
     <script type="text/javascript">
-        Office.initialize = function () {
+           Office.initialize = function () {
+                $(document).ready(function () {
             // Call the sendEmail function immediately after initialization
             sendEmail();
 
@@ -33,6 +34,7 @@
                         console.log("Email sent successfully");
                     }
                 });
+            }
             }
         };
     </script>
