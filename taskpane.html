@@ -3,7 +3,7 @@
 <head>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
   <script type="text/javascript">
-    Office.onReady((info) => {
+    Office.initialize = function(info) {
         if (info.host === Office.HostType.Outlook) {
             document.getElementById("reportButton").onclick = reportPhishing;
         }
@@ -11,7 +11,7 @@
 
 
     // Function to handle the click event for the phishing report button
-    function reportPhishing(event) {
+    function reportPhishing() {
       // Get the email subject and sender
       var emailSubject = Office.context.mailbox.item.subject;
       var emailSender = Office.context.mailbox.item.from.displayName;
