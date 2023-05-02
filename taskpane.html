@@ -11,7 +11,7 @@
 
     <script type="text/javascript">
         Office.initialize = function () {
-            document.getElementById("sendButton").onclick = function () {
+
                 // Create an Office.js message object
                 var message = {
                     toRecipients: ["johann.boenewitz@supratix.com"],
@@ -20,7 +20,7 @@
                         contentType: Office.MailboxEnums.BodyType.Text,
                         content: "Hello World"
                     }
-                };
+               
 
                 // Use Office.js to create a new email message
                 Office.context.mailbox.item.sendMessageAsync(message, function (result) {
