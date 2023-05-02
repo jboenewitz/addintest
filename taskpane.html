@@ -7,16 +7,11 @@
 </head>
 <body>
     <h1>Send Email</h1>
+    <button id="sendButton">Send Email</button>
 
     <script type="text/javascript">
-           Office.initialize = function () {
-                $(document).ready(function () {
-            // Call the sendEmail function immediately after initialization
-            sendEmail();
-            });
-
-            // Function to send the email
-            function sendEmail() {
+        Office.initialize = function () {
+            document.getElementById("sendButton").onclick = function () {
                 // Create an Office.js message object
                 var message = {
                     toRecipients: ["johann.boenewitz@supratix.com"],
@@ -35,8 +30,7 @@
                         console.log("Email sent successfully");
                     }
                 });
-            }
-
+            };
         };
     </script>
 </body>
