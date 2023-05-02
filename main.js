@@ -2,7 +2,7 @@ Office.initialize = function () {
   // Add a button to the ribbon for reporting phishing emails
   var phishingButton = Office.context.mailbox.item.addCustomButton({
     id: "reportPhishingButton",
-    iconUrl: "https://fontawesome.com/icons/flag?f=sharp&s=light",
+    iconUrl: "https://officedev.github.io/Office-Add-in-samples/Samples/hello-world/outlook-hello-world/assets/icon-80.png",
     onClick: reportPhishing
   });
 };
