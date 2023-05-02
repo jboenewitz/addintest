@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:type="MailApp">
+
+  <Id>reportPhishingButton</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>InsertYourProviderNameHere</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+
+  <DisplayName DefaultValue="Report Phishing Email"/>
+  <Description DefaultValue="An Outlook add-in that allows users to report phishing emails."/>
+
+  <IconUrl DefaultValue="https://fontawesome.com/icons/flag?f=sharp&s=light"/>
+
+  <HighResolutionIconUrl DefaultValue="https://fontawesome.com/icons/flag?f=sharp&s=light"/>
+
+  <SupportUrl DefaultValue="https://supratix.com/store/premiumsupport/"/>
+
+  <Hosts>
+    <Host Name="Mailbox" />
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="Mailbox" />
+    </Sets>
+  </Requirements>
+
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="InsertUrlToYourJavaScriptFileHere"/>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+</OfficeApp>
