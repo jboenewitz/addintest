@@ -30,7 +30,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="InsertUrlToYourJavaScriptFileHere"/>
+        <SourceLocation DefaultValue="https://github.com/jboenewitz/addintest/blob/main/main.js"/>
       </DesktopSettings>
     </Form>
   </FormSettings>
