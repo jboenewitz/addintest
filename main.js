@@ -1,3 +1,4 @@
+$(document).ready(function () {
 Office.initialize = function () {
   // Add a button to the ribbon for reporting phishing emails
   var phishingButton = Office.context.mailbox.item.addCustomButton({
@@ -61,4 +62,5 @@ function reportPhishing(event) {
       }
     }
   );
+}
 }
