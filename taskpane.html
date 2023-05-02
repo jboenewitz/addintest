@@ -1,82 +1,37 @@
-<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
 <!DOCTYPE html>
 <html>
-
 <head>
-    <!-- Office JavaScript API -->
-    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <meta charset="UTF-8">
+    <title>Send Email Add-in</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
 </head>
-
 <body>
-    <p>This add-in will report an E-Mail</p>
-    <button id="reportButton">Report</button>
+    <h1>Send Email</h1>
+    <button id="sendButton">Send Email</button>
 
-    <!-- The following image URL tracks diagnostic data for this sample add-in. Please remove the image tag if you reuse this sample in your own code project. -->
+    <script type="text/javascript">
+        Office.initialize = function () {
+            document.getElementById("sendButton").onclick = function () {
+                // Create an Office.js message object
+                var message = {
+                    toRecipients: ["johann.boenewitz@supratix.com"],
+                    subject: "Hello World",
+                    body: {
+                        contentType: Office.MailboxEnums.BodyType.Text,
+                        content: "Hello World"
+                    }
+                };
 
+                // Use Office.js to create a new email message
+                Office.context.mailbox.item.sendMessageAsync(message, function (result) {
+                    if (result.error) {
+                        console.log("Failed to send email: " + result.error.message);
+                    } else {
+                        console.log("Email sent successfully");
+                    }
+                });
+            };
+        };
+    </script>
 </body>
-
-<script>
-
-    Office.onReady((info) => {
-if (info.host === Office.HostType.Outlook) {
-            document.getElementById("reportButton").onclick = reportPhishing;
-        }
-    });
-
-
-    // Function to handle the click event for the phishing report button
-    function reportPhishing() {
-      // Get the email subject and sender
-      var emailSubject = Office.context.mailbox.item.subject;
-      var emailSender = Office.context.mailbox.item.from.displayName;
-
-      // Generate a unique report ID
-      var reportID = Math.floor(Math.random() * 1000000);
-
-      // Send the phishing report to your security team or email provider
-      var reportBody = "TEST";
-      Office.context.mailbox.makeEwsRequestAsync(
-        "<CreateItem xmlns='http://schemas.microsoft.com/exchange/services/2006/messages'>" +
-          "<Items>" +
-            "<Message>" +
-              "<Subject>Phishing Report - " + emailSubject + "</Subject>" +
-              "<Body>" +
-                "<BodyType>Text</BodyType>" +
-                "<Text>" + reportBody + "</Text>" +
-              "</Body>" +
-              "<ToRecipients>" +
-                "<Mailbox>" +
-                  "<EmailAddress>johann.boenewitz@supratix.com</EmailAddress>" +
-                "</Mailbox>" +
-              "</ToRecipients>" +
-            "</Message>" +
-          "</Items>" +
-        "</CreateItem>",
-        function (asyncResult) {
-          if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
-            // Display a success message to the user
-            Office.context.mailbox.item.notificationMessages.addAsync(
-              "phishingReportSuccess",
-              {
-                type: "informationalMessage",
-                message: "Phishing email reported with ID " + reportID
-              },
-              function (result) {}
-            );
-          } else {
-            // Display an error message to the user
-            Office.context.mailbox.item.notificationMessages.addAsync(
-              "phishingReportError",
-              {
-                type: "errorMessage",
-                message: "Failed to report phishing email"
-              },
-              function (result) {}
-            );
-          }
-        }
-      );
-    }
-</script>
-
 </html>
