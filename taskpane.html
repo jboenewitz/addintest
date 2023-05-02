@@ -9,28 +9,29 @@
     <h1>Send Email v.4</h1>
     <button id="sendButton">Send Email</button>
 
-<script type="text/javascript">
-    document.getElementById("sendButton").onclick = function () {
-        // Create an Office.js message object
-        var message = {
-            toRecipients: ["johann.boenewitz@supratix.com"],
-            subject: "Hello World",
-            body: {
-                contentType: Office.MailboxEnums.BodyType.Text,
-                content: "Hello World"
-            }
-        };
+    <script type="text/javascript">
+        Office.onReady(function () {
+            document.getElementById("sendButton").onclick = function () {
+                // Create an Office.js message object
+                var message = {
+                    toRecipients: ["johann.boenewitz@supratix.com"],
+                    subject: "Hello World",
+                    body: {
+                        contentType: Office.CoercionType.Text,
+                        content: "Hello World"
+                    }
+                };
 
-        // Use Office.js to create a new email message
-        Office.context.mailbox.item.sendMessageAsync(message, function (result) {
-            if (result.error) {
-                console.log("Failed to send email: " + result.error.message);
-            } else {
-                console.log("Email sent successfully");
-            }
+                // Use Office.js to create a new email message
+                Office.context.mailbox.item.sendMessageAsync(message, function (result) {
+                    if (result.error) {
+                        console.log("Failed to send email: " + result.error.message);
+                    } else {
+                        console.log("Email sent successfully");
+                    }
+                });
+            };
         });
-    };
-</script>
-
+    </script>
 </body>
 </html>
