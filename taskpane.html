@@ -2,32 +2,51 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Send Email Add-in</title>
+    <title>Email Metadata Export Add-in</title>
     <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
 </head>
 <body>
-    <h1>Send Email v.7</h1>
-    <button id="sendButton">Send Email</button>
+    <h1>Email Metadata Export</h1>
+    <button id="exportButton">Export Email</button>
 
     <script type="text/javascript">
         Office.initialize = function () {
-            document.getElementById("sendButton").onclick = function () {
-                // Create an Office.js message object
-                var message = {
-                    toRecipients: ["johann.boenewitz@supratix.com"],
-                    subject: "Hello World",
-                    body: {
-                        contentType: Office.CoercionType.Text,
-                        content: "Hello World"
-                    }
-                };
+            document.getElementById("exportButton").onclick = function () {
+                // Get the currently selected email item
+                var item = Office.context.mailbox.item;
 
-                // Use Office.js to create a new email message
-                Office.context.mailbox.item.sendMessageAsync(message, function (result) {
-                    if (result.error) {
-                        console.log("Failed to send email: " + result.error.message);
+                // Retrieve email metadata
+                var subject = item.subject;
+                var sender = item.from.displayName;
+                var dateTimeCreated = item.dateTimeCreated;
+                var body = item.body.getAsync(Office.CoercionType.Html, function (result) {
+                    if (result.status === Office.AsyncResultStatus.Succeeded) {
+                        var emailBody = result.value;
+
+                        // Construct the HTML content for the exported email
+                        var htmlContent = "<html><head><meta charset='UTF-8'></head><body>";
+                        htmlContent += "<h2>Email Metadata</h2>";
+                        htmlContent += "<p><strong>Subject:</strong> " + subject + "</p>";
+                        htmlContent += "<p><strong>Sender:</strong> " + sender + "</p>";
+                        htmlContent += "<p><strong>Date Created:</strong> " + dateTimeCreated + "</p>";
+                        htmlContent += "<h2>Email Content</h2>";
+                        htmlContent += emailBody;
+                        htmlContent += "</body></html>";
+
+                        // Create a blob containing the HTML content
+                        var blob = new Blob([htmlContent], { type: "text/html" });
+
+                        // Generate a download link for the HTML file
+                        var downloadLink = document.createElement("a");
+                        downloadLink.href = URL.createObjectURL(blob);
+                        downloadLink.download = "email.html";
+
+                        // Programmatically trigger the download
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
                     } else {
-                        console.log("Email sent successfully");
+                        console.log("Failed to retrieve email body: " + result.error.message);
                     }
                 });
             };
