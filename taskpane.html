@@ -10,73 +10,71 @@
 <body>
     <h1>Forward Email v14</h1>
     <button id="loginButton">Login</button>
-    <button id="forwardButton" disabled>Forward Email</button>
+    <button id="forwardButton">Forward Email</button>
 <script type="text/javascript">
     Office.initialize = function () {
-    document.getElementById("forwardButton").onclick = function () {
-        // Initialize the MSAL client
-        const msalConfig = {
-            auth: {
-                clientId: 'xYC9XDGKS7QCzcgOpz2qn34EPQtkZheeBHg06eer',
-                authority: 'https://supraworx.com/accounts/login/',
-                redirectUri: 'https://omc.supraworx.com/outlook-phishing-mail-reporter-addin/',
-                scopes: ['Mail.ReadWrite']
-            },
-            cache: {
-                cacheLocation: 'localStorage'
-            }
+        document.getElementById("forwardButton").onclick = function () {
+            // Initialize the MSAL client
+            const msalConfig = {
+                auth: {
+                    clientId: 'xYC9XDGKS7QCzcgOpz2qn34EPQtkZheeBHg06eer',
+                    authority: 'https://supraworx.com/accounts/login/',
+                    redirectUri: 'https://omc.supraworx.com/outlook-phishing-mail-reporter-addin/',
+                    scopes: ['Mail.ReadWrite']
+                },
+                cache: {
+                    cacheLocation: 'localStorage'
+                }
 
-        };
-        const msalInstance = new msal.ConfidentialClientApplication(msalConfig);
+            };
+            const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-        // Get the email item
-        var item = Office.context.mailbox.item;
-
-        // Get the email metadata
-        var subject = item.subject;
-        var sender = item.sender.emailAddress;
-
-        // Get the email content
-        item.body.getAsync('text', function(result){
-            var body = result.value;
-
-            // Create the HTML content for the email
-            var htmlContent = "<html><head><title>" + subject + "</title></head><body><h1>" + subject + "</h1><p>From: " + sender + "</p><div>" + body + "</div></body></html>";
-
-            // Authenticate using MSAL
-            msalInstance.acquireTokenByClientCredential({
-                scopes: msalConfig.auth.scopes,
-                authority: msalConfig.auth.authority
+            // Launch the Supraworx login popup
+            msalInstance.loginPopup({
+                scopes: msalConfig.auth.scopes
             }).then(function (authResponse) {
-                // Store the access token in roaming settings
-                Office.context.roamingSettings.set('accessToken', authResponse.accessToken);
-                Office.context.roamingSettings.saveAsync();
+                // Store the access token in a cookie
+                document.cookie = "accessToken=" + authResponse.accessToken + ";path=/";
 
-                // Make the CORS request
-                $.ajax({
-                    url: "{% url 'store:contact_formular_api' %}",
-                    type: "POST",
-                    dataType: "json",
-                    contentType: "application/x-www-form-urlencoded",
-                    headers: {
-                        Authorization: "Bearer " + authResponse.accessToken
-                    },
-                    data: { html_content: htmlContent },
-                    success: function(response) {
-                        console.log("Email forwarded successfully");
-                    },
-                    error: function(xhr, status, error) {
-                        console.log("Failed to forward email: " + error);
-                    }
+                // Get the email item
+                var item = Office.context.mailbox.item;
+
+                // Get the email metadata
+                var subject = item.subject;
+                var sender = item.sender.emailAddress;
+
+                // Get the email content
+                item.body.getAsync('text', function(result){
+                    var body = result.value;
+
+                    // Create the HTML content for the email
+                    var htmlContent = "<html><head><title>" + subject + "</title></head><body><h1>" + subject + "</h1><p>From: " + sender + "</p><div>" + body + "</div></body></html>";
+
+                    // Make the CORS request
+                    $.ajax({
+                        url: "{% url 'store:contact_formular_api' %}",
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        headers: {
+                            Authorization: "Bearer " + authResponse.accessToken
+                        },
+                        data: { html_content: htmlContent },
+                        success: function(response) {
+                            console.log("Email forwarded successfully");
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("Failed to forward email: " + error);
+                        }
+                    });
                 });
             }).catch(function (error) {
                 console.log("Authentication failed: " + error);
             });
-        });
+        };
     };
-};
-
 </script>
+
 
 </body>
 </html>
