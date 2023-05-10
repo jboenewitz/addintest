@@ -1,56 +1,76 @@
+{% load i18n static compress %}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Email Metadata Export Add-in</title>
+    <title>Forward Email Add-in</title>
+    <script src="{% static 'framework/jquery/jquery-3.6.0.min.js' %}" type="text/javascript"></script>
     <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
 </head>
 <body>
-    <h1>Email Metadata Export</h1>
-    <button id="exportButton">Export Email</button>
+    <h1>Forward Email v12</h1>
+    <button id="forwardButton">Forward Email</button>
 
-    <script type="text/javascript">
-        Office.initialize = function () {
-            document.getElementById("exportButton").onclick = function () {
-                // Get the currently selected email item
-                var item = Office.context.mailbox.item;
-
-                // Retrieve email metadata
-                var subject = item.subject;
-                var sender = item.from.displayName;
-                var dateTimeCreated = item.dateTimeCreated;
-                var body = item.body.getAsync(Office.CoercionType.Html, function (result) {
-                    if (result.status === Office.AsyncResultStatus.Succeeded) {
-                        var emailBody = result.value;
-
-                        // Construct the HTML content for the exported email
-                        var htmlContent = "<html><head><meta charset='UTF-8'></head><body>";
-                        htmlContent += "<h2>Email Metadata</h2>";
-                        htmlContent += "<p><strong>Subject:</strong> " + subject + "</p>";
-                        htmlContent += "<p><strong>Sender:</strong> " + sender + "</p>";
-                        htmlContent += "<p><strong>Date Created:</strong> " + dateTimeCreated + "</p>";
-                        htmlContent += "<h2>Email Content</h2>";
-                        htmlContent += emailBody;
-                        htmlContent += "</body></html>";
-
-                        // Create a blob containing the HTML content
-                        var blob = new Blob([htmlContent], { type: "text/html" });
-
-                        // Generate a download link for the HTML file
-                        var downloadLink = document.createElement("a");
-                        downloadLink.href = URL.createObjectURL(blob);
-                        downloadLink.download = "email.html";
-
-                        // Programmatically trigger the download
-                        document.body.appendChild(downloadLink);
-                        downloadLink.click();
-                        document.body.removeChild(downloadLink);
-                    } else {
-                        console.log("Failed to retrieve email body: " + result.error.message);
-                    }
-                });
+<script type="text/javascript">
+    Office.initialize = function () {
+        document.getElementById("forwardButton").onclick = function () {
+            // Initialize the MSAL client
+            const msalConfig = {
+                auth: {
+                    clientId: 'xYC9XDGKS7QCzcgOpz2qn34EPQtkZheeBHg06eer',
+                    // authority: 'https://supratix.com/accounts/login/',
+                    redirectUri: 'https://localhost:3000/redirect'
+                },
+                cache: {
+                    cacheLocation: 'localStorage'
+                }
             };
+            const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+            // Get the email item
+            var item = Office.context.mailbox.item;
+
+            // Get the email metadata
+            var subject = item.subject;
+            var sender = item.sender.emailAddress;
+
+            // Get the email content
+            item.body.getAsync('text', function(result){
+                var body = result.value;
+
+                // Create the HTML content for the email
+                var htmlContent = "<html><head><title>" + subject + "</title></head><body><h1>" + subject + "</h1><p>From: " + sender + "</p><div>" + body + "</div></body></html>";
+
+                // Authenticate using MSAL
+                msalInstance.loginPopup().then(function (authResponse) {
+                    // Store the access token in roaming settings
+                    Office.context.roamingSettings.set('accessToken', authResponse.accessToken);
+                    Office.context.roamingSettings.saveAsync();
+
+                    // Make the CORS request
+                    $.ajax({
+                        url: "{% url 'store:contact_formular_api' %}",
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        headers: {
+                            Authorization: "Bearer " + authResponse.accessToken
+                        },
+                        data: { html_content: htmlContent },
+                        success: function(response) {
+                            console.log("Email forwarded successfully");
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("Failed to forward email: " + error);
+                        }
+                    });
+                }).catch(function (error) {
+                    console.log("Authentication failed: " + error);
+                });
+            });
         };
-    </script>
+    };
+</script>
+
 </body>
 </html>
