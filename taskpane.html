@@ -13,129 +13,21 @@
     <button id="forwardButton" disabled>Forward Email</button>
 <script type="text/javascript">
     Office.initialize = function () {
-        var msalInstance;
-        var accessToken = getCookie('accessToken');
-        if (accessToken) {
-            msalInstance = createMsalInstance();
-            enableForwardButton();
-        } else {
-            disableForwardButton();
-        }
-
-        document.getElementById("loginButton").onclick = function () {
-            msalInstance = createMsalInstance();
-            msalInstance.loginPopup().then(function (authResponse) {
-                // Store the access token in a cookie
-                setCookie('accessToken', authResponse.accessToken, 30);
-
-                // Enable the Forward button
-                enableForwardButton();
-            }).catch(function (error) {
-                console.log("Authentication failed: " + error);
-            });
-        };
-
-        document.getElementById("forwardButton").onclick = function () {
-            // Get the email item
-            var item = Office.context.mailbox.item;
-
-            // Get the email metadata
-            var subject = item.subject;
-            var sender = item.sender.emailAddress;
-
-            // Get the email content
-            item.body.getAsync('text', function(result){
-                var body = result.value;
-
-                // Create the HTML content for the email
-                var htmlContent = "<html><head><title>" + subject + "</title></head><body><h1>" + subject + "</h1><p>From: " + sender + "</p><div>" + body + "</div></body></html>";
-
-                // Make the CORS request
-                $.ajax({
-                    url: "{% url 'store:contact_formular_api' %}",
-                    type: "POST",
-                    dataType: "json",
-                    contentType: "application/x-www-form-urlencoded",
-                    headers: {
-                        Authorization: "Bearer " + accessToken
-                    },
-                    data: { html_content: htmlContent },
-                    success: function(response) {
-                        console.log("Email forwarded successfully");
-                    },
-                    error: function(xhr, status, error) {
-                        console.log("Failed to forward email: " + error);
-                    }
-                });
-            });
-        };
-    };
-
-
-// Function to create an MSAL instance
-function createMsalInstance() {
-    const msalConfig = {
-        auth: {
-            clientId: 'xYC9XDGKS7QCzcgOpz2qn34EPQtkZheeBHg06eer',
-            redirectUri: 'https://localhost:3000/redirect'
-        },
-        cache: {
-            cacheLocation: 'localStorage'
-        }
-    };
-    return new msal.PublicClientApplication(msalConfig);
-}
-
-// Function to handle the login process
-function handleLogin(msalInstance) {
-    return new Promise(function(resolve, reject) {
-        // Check if there's already an access token in the cookies
-        const accessToken = Cookies.get('accessToken');
-        if (accessToken) {
-            resolve(accessToken);
-            return;
-        }
-
-        // Otherwise, start the login process
-        msalInstance.loginPopup().then(function (authResponse) {
-            // Store the access token in the cookies
-            Cookies.set('accessToken', authResponse.accessToken, { expires: 7 });
-            resolve(authResponse.accessToken);
-        }).catch(function (error) {
-            reject(error);
-        });
-    });
-}
-
-// Function to handle the email forwarding process
-function forwardEmail(accessToken, htmlContent) {
-    return new Promise(function(resolve, reject) {
-        // Make the CORS request
-        $.ajax({
-            url: "{% url 'store:contact_formular_api' %}",
-            type: "POST",
-            dataType: "json",
-            contentType: "application/x-www-form-urlencoded",
-            headers: {
-                Authorization: "Bearer " + accessToken
-            },
-            data: { html_content: htmlContent },
-            success: function(response) {
-                console.log("Email forwarded successfully");
-                resolve(response);
-            },
-            error: function(xhr, status, error) {
-                console.log("Failed to forward email: " + error);
-                reject(error);
-            }
-        });
-    });
-}
-
-Office.initialize = function () {
     document.getElementById("forwardButton").onclick = function () {
-        // Get the MSAL instance
-        const msalInstance = createMsalInstance();
+        // Initialize the MSAL client
+        const msalConfig = {
+            auth: {
+                clientId: 'xYC9XDGKS7QCzcgOpz2qn34EPQtkZheeBHg06eer',
+                authority: 'https://login.microsoftonline.com/common',
+                redirectUri: 'https://localhost:3000/redirect',
+                scopes: ['Mail.ReadWrite']
+            },
+            cache: {
+                cacheLocation: 'localStorage'
+            }
+            clientSecret: 'vZErfZv9m9N5XcncArSIkQYr9BXfPS4JerbMuID1cS9ZMN9szZwwgh9AonxNWV8m7MvlQbW65Ylnixv0kr7lZoFPWKXlmBuxzc0cEUCp6FYgfLwD4C982RIUVeaI6Muo'
+        };
+        const msalInstance = new msal.ConfidentialClientApplication(msalConfig);
 
         // Get the email item
         var item = Office.context.mailbox.item;
@@ -151,16 +43,34 @@ Office.initialize = function () {
             // Create the HTML content for the email
             var htmlContent = "<html><head><title>" + subject + "</title></head><body><h1>" + subject + "</h1><p>From: " + sender + "</p><div>" + body + "</div></body></html>";
 
-            // Handle the login process
-            handleLogin(msalInstance).then(function(accessToken) {
-                // Forward the email
-                forwardEmail(accessToken, htmlContent).then(function(response) {
-                    // Email forwarded successfully
-                }).catch(function(error) {
-                    // Failed to forward email
+            // Authenticate using MSAL
+            msalInstance.acquireTokenByClientCredential({
+                scopes: msalConfig.auth.scopes,
+                authority: msalConfig.auth.authority
+            }).then(function (authResponse) {
+                // Store the access token in roaming settings
+                Office.context.roamingSettings.set('accessToken', authResponse.accessToken);
+                Office.context.roamingSettings.saveAsync();
+
+                // Make the CORS request
+                $.ajax({
+                    url: "{% url 'store:contact_formular_api' %}",
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    headers: {
+                        Authorization: "Bearer " + authResponse.accessToken
+                    },
+                    data: { html_content: htmlContent },
+                    success: function(response) {
+                        console.log("Email forwarded successfully");
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("Failed to forward email: " + error);
+                    }
                 });
-            }).catch(function(error) {
-                // Authentication failed
+            }).catch(function (error) {
+                console.log("Authentication failed: " + error);
             });
         });
     };
